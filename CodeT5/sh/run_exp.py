@@ -73,12 +73,13 @@ def get_args_by_task_model(task, sub_task, model_tag):
     if 'codet5_small' in model_tag:
         bs = 32
         if task == 'summarize' or task == 'translate' or (task == 'refine' and sub_task == 'small'):
-            # bs = 64
-            bs = 32
+            bs = 64
         elif task == 'clone':
             bs = 25
     elif 'codet5_large' in model_tag:
         bs = 8
+    elif 'codet5_base' in model_tag and task == 'summarize':
+        bs = 16
     else:
         bs = 32
         if task == 'translate':
