@@ -2,18 +2,24 @@ const esprima = require("esprima");
 const escodegen = require("escodegen");
 const estraverse = require("estraverse");
 const fs = require("fs");
+const path = require('path');
 const readline = require("readline");
 
-const filepath = "../data/data/summarize/javascript/test.jsonl";
+inputFile = process.argv[2]
+outputFile = process.argv[3]
 
-const stream = fs.createReadStream(filepath);
-const reader = readline.createInterface({ input: stream });
+outDir = path.dirname(outputFile)
+if (!fs.existsSync(outDir)) {
+  fs.mkdirSync(outDir);
+}
 
-let functionDict = {};
-let funcCount = 0, varCount = 0;
-let variableDict = {};
+var functionDict = {};
+var funcCount = 0;
+var varCount = 0;
+var variableDict = {};
 
 function visit(ast) {
+
   const keys = Object.keys(ast);
   if (ast["type"] == "FunctionDeclaration") {
     if (ast.id.type == "Identifier" && !(ast.id.name in functionDict)) {
@@ -30,6 +36,7 @@ function visit(ast) {
       });
     }
   }
+
   if (ast["type"] == "VariableDeclaration") {
     ast.declarations.forEach((declarator) => {
       if (
@@ -41,6 +48,7 @@ function visit(ast) {
       }
     });
   }
+
   for (let i = 0; i < keys.length; i++) {
     const child = ast["body"];
     if (Array.isArray(child)) {
@@ -69,61 +77,65 @@ function rename(ast, renamingObj) {
   return escodegen.generate(ast);
 }
 
-function get_ast(all_codes) {
+function get_ast(all_codes, outFile) {
   const esprimaOptions = { loc: true };
   let errorcount = 0;
-  
+  console.log(all_codes.length)
   for (let i = 0; i < all_codes.length; i++) {
+    console.log(i)
     try {
-        const ast = esprima.parse(all_codes[i], esprimaOptions);
-        visit(ast);
-        modifiedcode = rename(ast, functionDict);
-        modifiedcode = rename(ast, variableDict);
-        fs.appendFileSync('file_test.jsonl', "\n");
-        fs.appendFileSync('file_test.jsonl', JSON.stringify(modifiedcode));
-        functionDict = {}, funcCount = 0, varCount = 0, variableDict = {};
-      } catch (e) {
-        errorcount += 1;
-        console.log(e.message);
-        // console.log(all_codes[i]);
-      }
+      d = all_codes[i]
+      functionDict = {};
+      funcCount = 0;
+      varCount = 0;
+      variableDict = {};
+      const ast = esprima.parse(d['code'], esprimaOptions);
+      visit(ast);
+      modifiedcode = rename(ast, functionDict);
+      modifiedcode = rename(ast, variableDict);
+      d['code'] = modifiedcode
+      fs.appendFileSync(outFile, JSON.stringify(d));
+      fs.appendFileSync(outFile, "\n");
+    } catch (e) {
+      errorcount += 1;
+      // console.log('error occurred')
+      console.log(e.message);
+    }
   }
+  console.log('finished get_ast');
 }
 
-function read_files() {
-  let all_codes = [];
-  try {
-    reader
-      .on("line", (line) => {
-        const data = JSON.parse(line);
-        code = data["original_string"];
-        all_codes.push(code);
-      })
-      .on("close", () => {
-        get_ast(all_codes);
-        console.log("Done reading file.");
-      });
-  } catch (error) {
-    console.log(error);
-    console.log("Error occurred !!");
-  }
-}
+const stream = fs.createReadStream(inputFile);
+const reader = readline.createInterface({ input: stream });
 
-let listOfFunctions = [
-  async () =>
-    new Promise((resolve) => {
-      read_files();
-      resolve(true);
-    }),
-];
+all_codes = [];
+reader
+  .on("line", (line) => {
+    const data = JSON.parse(line);
+    all_codes.push(data);
+  })
+  .on("close", () => {
+    get_ast(all_codes, outputFile);
+    console.log("Done reading file.");
+    process.exit(1);
+  });
 
-let executeListOfFunctions = async (listOfFunctions) => {
-  return Promise.all(listOfFunctions.map((func) => func()));
-};
 
-// calling main function
-executeListOfFunctions(listOfFunctions);
+// let listOfFunctions = [
+//   async () =>
+//     new Promise((resolve) => {
+//       read_files();
+//       resolve(true);
+//     }),
+// ];
 
-// const ast = acorn.parse(code, { ecmaVersion: 2021 });
+// let executeListOfFunctions = async (listOfFunctions) => {
+//   return Promise.all(listOfFunctions.map((func) => func()));
+// };
 
-// console.log(ast);
+// // calling main function
+// executeListOfFunctions(listOfFunctions);
+
+// // const ast = acorn.parse(code, { ecmaVersion: 2021 });
+
+// // console.log(ast);
