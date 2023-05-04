@@ -119,23 +119,3 @@ reader
     console.log("Done reading file.");
     process.exit(1);
   });
-
-
-// let listOfFunctions = [
-//   async () =>
-//     new Promise((resolve) => {
-//       read_files();
-//       resolve(true);
-//     }),
-// ];
-
-// let executeListOfFunctions = async (listOfFunctions) => {
-//   return Promise.all(listOfFunctions.map((func) => func()));
-// };
-
-// // calling main function
-// executeListOfFunctions(listOfFunctions);
-
-// // const ast = acorn.parse(code, { ecmaVersion: 2021 });
-
-// // console.log(ast);
