@@ -239,7 +239,10 @@ def read_summarize_examples(filename, data_num):
             js = json.loads(line)
             if 'idx' not in js:
                 js['idx'] = idx
-            code = ' '.join(js['code_tokens']).replace('\n', ' ')
+            if 'code_tokens' in js:
+                code = ' '.join(js['code_tokens']).replace('\n', ' ')
+            else:
+                code = js['code'].replace('\n', ' ')
             code = ' '.join(code.strip().split())
             nl = ' '.join(js['docstring_tokens']).replace('\n', '')
             nl = ' '.join(nl.strip().split())
