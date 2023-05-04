@@ -6,6 +6,7 @@ const escodegen = require("escodegen");
 
 inputFile = process.argv[2];
 outputFile = process.argv[3];
+mode = process.argv[4]
 
 outDir = path.dirname(outputFile);
 if (!fs.existsSync(outDir)) {
@@ -81,6 +82,65 @@ train_comment_code = [
 }",
 ];
 
+test_comment_code = [
+    "function arrayDiff(a, b) {\n\
+        return [\n\
+            ...a.filter(x => b.indexOf(x) === -1),\n\
+            ...b.filter(x => a.indexOf(x) === -1)\n\
+        ]\n\
+    }",
+    "function copyToClipboard() {\n\
+        const copyText = document.getElementById('myInput');\n\
+        copyText.select();\n\
+        document.execCommand('copy');\n\
+    }",
+    "window.oncontextmenu = () => {\n\
+        console.log('right click');\n\
+        return false\n\
+    }",
+    "function isJson(str) {\n\
+        try {\n\
+            JSON.parse(str);\n\
+        } catch (e) {\n\
+            return false;\n\
+        }\n\
+        return true;\n\
+    }",
+    "const observer = new ResizeObserver((entries) => {\n\
+        for (let entry of entries) {\n\
+          const cr = entry.contentRect;\n\
+          console.log = `Size: ${cr.width}px X ${cr.height}px`;\n\
+        }\n\
+      });",
+    "const pasteBox = document.getElementById('paste-no-event');\n\
+    pasteBox.onpaste = (e) => {\n\
+      e.preventDefault();\n\
+      return false;\n\
+    };",
+    "document.querySelector('#abort').addEventListener('click', function() {\n\
+        controller.abort();\n\
+      });",
+    "function getOrientation() {\n\
+        const isPortrait = screen.orientation.type.startswith('portrait')\n\
+        return isPortrait ? 'portrait' : 'landscape'\n\
+    }",
+    "const getRandomNumberInclusive =(min, max)=> {\n\
+        min = Math.ceil(min);\n\
+        max = Math.floor(max);\n\
+        return Math.floor(Math.random() * (max - min + 1)) + min;\n\
+    }",
+    "const countMyFruits = myFruits.reduce((countFruits,fruit) => {\n\
+        countFruits[fruit] = ( countFruits[fruit] || 0 ) +1;\n\
+        return countFruits\n\
+    },{})"
+]
+
+comment_code_file = train_comment_code
+
+if(mode == "test") {
+    comment_code_file = test_comment_code
+}
+
 function add_comment(all_codes, outFile, commented_codes) {
   console.log(all_codes.length);
   let errorcount = 0;
@@ -110,8 +170,8 @@ const stream = fs.createReadStream(inputFile);
 const reader = readline.createInterface({ input: stream });
 
 commented_codes = []
-for(let i = 0; i < train_comment_code.length; i++) {
-    all_lines = train_comment_code[i].split("\n")
+for(let i = 0; i < comment_code_file.length; i++) {
+    all_lines = comment_code_file[i].split("\n")
     const commented = all_lines.map(x => "// " + x);
     commented_codes.push(commented.join("\n"))
 }
