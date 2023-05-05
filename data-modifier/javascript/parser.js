@@ -94,6 +94,7 @@ function get_ast(all_codes, outFile) {
       modifiedcode = rename(ast, functionDict);
       modifiedcode = rename(ast, variableDict);
       d['code'] = modifiedcode
+      delete d['code_tokens']
       fs.appendFileSync(outFile, JSON.stringify(d));
       fs.appendFileSync(outFile, "\n");
     } catch (e) {

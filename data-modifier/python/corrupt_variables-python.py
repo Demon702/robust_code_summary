@@ -9,8 +9,8 @@ import os
 import re
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--input_dir', type=str, default='../CodeT5/data/summarize/python')
-parser.add_argument('-o', '--output_dir', type=str, default='../CodeT5/corrupted-function-variable/summarize/python')
+parser.add_argument('-i', '--input_dir', type=str, default='../../CodeT5/data/summarize/python')
+parser.add_argument('-o', '--output_dir', type=str, default='../../CodeT5/corrupted-function-variable/summarize/python')
 parser.add_argument('--error_rate', type=float, default=1.0)
 
 args = parser.parse_args()
@@ -102,6 +102,7 @@ for file in all_files:
         try:
             tree = ast.parse(f'''{code}''')
             d['code'] = astunparse.unparse(TransformName().visit(tree))
+            del d['code_tokens']
         except Exception as e:
             # print('error occurred', str(e))
             skip_counter += 1
