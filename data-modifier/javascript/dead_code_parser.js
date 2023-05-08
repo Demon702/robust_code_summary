@@ -14,14 +14,9 @@ if (!fs.existsSync(outDir)) {
 }
 
 var returnDict = new Set();
+var blockDict = new Set();
 
-ignored_code = [
-  'for (let i = 0; i < cars.length; i++) { text += cars[i] + "<br>"; }',
-  "numbers.sort((a, b) => a - b);",
-  "const data = await response.json();",
-  "const maxi = (num1 > num2) ? num1 : num2;",
-  "var data = fruits.find(element => element.length > 6);",
-];
+const esprimaOptions = { loc: true };
 
 function visit(ast) {
   const keys = Object.keys(ast);
@@ -41,12 +36,28 @@ function visit(ast) {
   }
 }
 
+function visitToGetBlock(ast) {
+  const keys = Object.keys(ast);
+  if (ast["type"] == "FunctionDeclaration") {
+    blockDict.add(ast["body"]["loc"]);
+  }
+  for (let i = 0; i < keys.length; i++) {
+    const child = ast["body"];
+    if (Array.isArray(child)) {
+      for (let j = 0; j < child.length; j++) {
+        visitToGetBlock(child[j]);
+      }
+    } else if (isNode(child)) {
+      visitToGetBlock(child);
+    }
+  }
+}
+
 function isNode(node) {
   return typeof node === "object";
 }
 
-function get_ast(all_codes, outFile) {
-  const esprimaOptions = { loc: true };
+function get_ast(all_codes, outFile, ignored_code) {
   let errorcount = 0;
   console.log(all_codes.length);
   for (let i = 0; i < all_codes.length; i++) {
@@ -62,26 +73,45 @@ function get_ast(all_codes, outFile) {
       for (let element of returnDict) {
         all_lines = modified_code.split("\n");
         let index = element["line"];
-        let str = ignored_code[Math.floor(Math.random() * ignored_code.length)];
+        let string = "";
+        while(true) {
+          code_string = all_codes[Math.floor(Math.random() * all_codes.length)]["code"];
+          try {
+            blockDict = new Set();
+            const newast = esprima.parse(code_string, esprimaOptions);
+            visitToGetBlock(newast);
+            modified_code_string = "";
+            for (let element of blockDict) {
+              lines = code_string.split("\n");
+              let startindex = element["start"]["line"]
+              let endindex = element["end"]["line"]
+              modified_code_string = lines.slice(startindex, endindex).join("\n");
+              // console.log("something", modified_code_string);
+            }
+            string = modified_code_string;
+            if(modified_code_string != "") break;
+          }
+          catch(e) {
+            console.log("error occurred, try again");
+          }
+        }
+        
         if (all_lines.length > index + 2) {
           console.log("skipping this, return statement is not the last line");
           continue;
         }
-        // console.log(index, all_lines.length)
-        all_lines.splice(index, 0, str);
+        all_lines.splice(index, 0, string);
         modified_code = all_lines.join("\n");
       }
       if (d["code"] === modified_code) {
         continue;
       }
       d["code"] = modified_code;
-    //   console.log(modified_code);
-    //   console.log("\n\n");
+      
       fs.appendFileSync(outFile, JSON.stringify(d));
       fs.appendFileSync(outFile, "\n");
     } catch (e) {
       errorcount += 1;
-      // console.log('error occurred')
       console.log(e.message);
     }
   }
