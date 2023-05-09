@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
 import com.github.javaparser.printer.YamlPrinter;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -19,13 +20,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+
 public class Main {
     private static int cntr;
     private static String inputPath = "CodeT5/data/summarize/java";
-    private static String outputPath = "javaCorruptedOutput/";
+    private static String outputPath = "javaCorruptedCodeOutput/";
 
-    private static void modifier(String code, String outFolder) throws IOException {
+    private static String modifier(String code) throws IOException {
         CompilationUnit cu;
+        String modifiedCode = null;
         try{
             cu = StaticJavaParser.parse(code);
             // Now comes the inspection code:
@@ -65,48 +68,8 @@ public class Main {
             });
             mnm.hm.clear();
             vnm.hv.clear();
-            String modifiedCode = cu.toString();
-//            System.out.println(modifiedCode);
-            int idx = modifiedCode.indexOf("{");
-
-            FileOutputStream outputStream = null;
-            try{
-                outputStream = new FileOutputStream(outputPath + "/" + outFolder + "/file_"+Integer.toString(cntr)+".java");
-                byte[] strToBytes = modifiedCode.getBytes();
-                outputStream.write(strToBytes);
-            }
-            catch (IOException e){
-                System.out.println((e.getMessage()));
-            }
-            outputStream.close();
-
-            //add commented code
-            addCommentedCode cc = new addCommentedCode(outFolder);
-            int[] indexes;
-            int ind;
-            try {
-               indexes = IntStream.range(0, modifiedCode.length())
-                    .filter(i -> modifiedCode.charAt(i) == ';').toArray();
-               ind = indexes[(int)Math.floor(Math.random() * indexes.length)];
-            }
-            catch (IndexOutOfBoundsException e){
-                ind = modifiedCode.indexOf(";");
-                System.out.println(e.getMessage());
-            }
-            String newModifiedCode = modifiedCode.substring(0, ind+1)
-                    + cc.commentedCode
-                    + modifiedCode.substring(ind + 1);
-           outputStream = null;
-            try{
-                outputStream = new FileOutputStream(outputPath + "/commentedCode/" + outFolder + "/file_"+Integer.toString(cntr)+".java");
-                byte[] strToBytes = newModifiedCode.getBytes();
-                outputStream.write(strToBytes);
-            }
-            catch (IOException e){
-                System.out.println((e.getMessage()));
-            }
-            outputStream.close();
-
+            modifiedCode = cu.toString();
+//            System.out.println(cntr);
         }
         catch(ParseProblemException pe){
             System.out.println("cntr "+Integer.toString(cntr));
@@ -114,6 +77,29 @@ public class Main {
             System.out.println(pe.getMessage());
         }
         cntr++;
+        return modifiedCode;
+    }
+
+    private static String writeCommentedCode(String code, String mode, String commentedCode) throws IOException {
+        //add commented code
+//        addCommentedCode cc = new addCommentedCode(mode);
+        int[] indexes;
+        int ind;
+        try {
+            indexes = IntStream.range(0, code.length())
+                    .filter(i -> code.charAt(i) == ';').toArray();
+            ind = indexes[(int)Math.floor(Math.random() * indexes.length)];
+        }
+        catch (IndexOutOfBoundsException e){
+            ind = code.indexOf(";");
+            System.out.println(e.getMessage());
+        }
+        String newModifiedCode = code.substring(0, ind+1)
+                + "/* " + commentedCode + " */"
+                + code.substring(ind + 1);
+
+        return newModifiedCode;
+
     }
 
     public static void main(String[] args) throws Exception{
@@ -122,12 +108,20 @@ public class Main {
                 .filter(Files::isRegularFile)
                 .map(Path::toFile)
                 .collect(Collectors.toList());
-        System.out.println(filesInFolder);
+//        System.out.println(filesInFolder);
         for(File filePath : filesInFolder){
             cntr = 1;
             System.out.println(filePath);
+            String mode;
+            String [] arr = String.valueOf(filePath).split("/", 0);
+            mode = arr[arr.length-1].substring(0,arr[arr.length-1].indexOf("."));
+
+            List<String> allLines = Files.readAllLines(filePath.toPath());
+            Files.createDirectories(Paths.get(outputPath + "nameChanged" ));
+            Files.createDirectories(Paths.get(outputPath + "commented"));
             try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
                 String line;
+                long lineCount = (long) Files.lines(filePath.toPath()).count();
                 while ((line = br.readLine()) != null) {
                     Object obj = new JSONParser().parse(line);
                     JSONObject jsonObject = (JSONObject)obj;
@@ -137,39 +131,44 @@ public class Main {
                             jCode +
                             "}";
 //                System.out.println(code);
-                    String [] arr = String.valueOf(filePath).split("/", 0);
-                    String outFolder = arr[arr.length-1].substring(0,arr[arr.length-1].indexOf("."));
-                    modifier(code,outFolder);
-//                    System.exit(0);
+                    jsonObject.remove("code_tokens");
+                    String modifiedCode = modifier(code);
+                    jsonObject.put("code", modifiedCode);
+                    jsonObject.put("original_string", modifiedCode);
+
+                    if(modifiedCode!=null){
+                        try(FileWriter file = new FileWriter(outputPath + "nameChanged/" + mode + "_data.jsonl", true);
+                            BufferedWriter bw = new BufferedWriter(file)){
+                            bw.write(jsonObject.toJSONString());
+                            bw.newLine();
+                        }
+                    }
+
+//                    file.write(jsonObject.toJSONString());
+
+                    int lineNo = (int)Math.floor(Math.random() * lineCount);
+                    obj = new JSONParser().parse(allLines.get(lineNo));
+                    jsonObject = (JSONObject)obj;
+                    jCode = String.valueOf(jsonObject.get("code"));
+                    String commentedCode = writeCommentedCode(code, mode, jCode);
+                    jsonObject.put("code", commentedCode);
+                    jsonObject.put("original_string", commentedCode);
+
+                    if(commentedCode!=null){
+                        try(FileWriter file = new FileWriter(outputPath + "commented/" + mode + "_data.jsonl", true);
+                            BufferedWriter bw = new BufferedWriter(file)){
+                            bw.write(jsonObject.toJSONString());
+                            bw.newLine();
+                        }
+                    }
+
                 }
-            } catch (IOException e) {
+
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        File directory=new File("javaCorruptedOutput/train");
-        int fileCount=directory.list().length;
-        System.out.println("Train File Count:"+fileCount);
-
-        directory=new File("javaCorruptedOutput/test");
-        fileCount=directory.list().length;
-        System.out.println("Test File Count:"+fileCount);
-
-       directory=new File("javaCorruptedOutput/valid");
-        fileCount=directory.list().length;
-        System.out.println("Valid File Count:"+fileCount);
-
-        directory=new File("javaCorruptedOutput/commentedCode/train");
-        fileCount=directory.list().length;
-        System.out.println("Train File Count:"+fileCount);
-
-        directory=new File("javaCorruptedOutput/commentedCode/test");
-        fileCount=directory.list().length;
-        System.out.println("Test File Count:"+fileCount);
-
-        directory=new File("javaCorruptedOutput/commentedCode/valid");
-        fileCount=directory.list().length;
-        System.out.println("Valid File Count:"+fileCount);
-
     }
 }
 

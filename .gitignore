@@ -1,2 +1,6 @@
 .DS_Store
 *.jsonl
+/data-modifier/java/.idea/
+/data-modifier/java/target/
+/data-modifier/java/java.iml
+
