@@ -69,6 +69,8 @@ public class Main {
             mnm.hm.clear();
             vnm.hv.clear();
             modifiedCode = cu.toString();
+            int ind2 = code.indexOf("{");
+            modifiedCode = modifiedCode.substring(ind2+1, modifiedCode.length()-1);
 //            System.out.println(cntr);
         }
         catch(ParseProblemException pe){
@@ -84,19 +86,22 @@ public class Main {
         //add commented code
 //        addCommentedCode cc = new addCommentedCode(mode);
         int[] indexes;
-        int ind;
+        int ind, ind2, ind3;
+        ind2 = code.indexOf("{");
+        String newCode = code.substring(ind2+1, code.length()-1);
         try {
-            indexes = IntStream.range(0, code.length())
-                    .filter(i -> code.charAt(i) == ';').toArray();
+            indexes = IntStream.range(0, newCode.length())
+                    .filter(i -> newCode.charAt(i) == ';').toArray();
             ind = indexes[(int)Math.floor(Math.random() * indexes.length)];
         }
         catch (IndexOutOfBoundsException e){
-            ind = code.indexOf(";");
+            ind = newCode.indexOf(";");
             System.out.println(e.getMessage());
         }
-        String newModifiedCode = code.substring(0, ind+1)
+
+        String newModifiedCode = newCode.substring(0, ind+1)
                 + "/* " + commentedCode + " */"
-                + code.substring(ind + 1);
+                + newCode.substring(ind + 1);
 
         return newModifiedCode;
 
@@ -134,7 +139,7 @@ public class Main {
                     jsonObject.remove("code_tokens");
                     String modifiedCode = modifier(code);
                     jsonObject.put("code", modifiedCode);
-                    jsonObject.put("original_string", modifiedCode);
+//                    jsonObject.put("original_string", modifiedCode);
 
                     if(modifiedCode!=null){
                         try(FileWriter file = new FileWriter(outputPath + "nameChanged/" + mode + "_data.jsonl", true);
@@ -152,7 +157,7 @@ public class Main {
                     jCode = String.valueOf(jsonObject.get("code"));
                     String commentedCode = writeCommentedCode(code, mode, jCode);
                     jsonObject.put("code", commentedCode);
-                    jsonObject.put("original_string", commentedCode);
+//                    jsonObject.put("original_string", commentedCode);
 
                     if(commentedCode!=null){
                         try(FileWriter file = new FileWriter(outputPath + "commented/" + mode + "_data.jsonl", true);
