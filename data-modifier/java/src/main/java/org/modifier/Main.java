@@ -69,8 +69,9 @@ public class Main {
             mnm.hm.clear();
             vnm.hv.clear();
             modifiedCode = cu.toString();
-            int ind2 = code.indexOf("{");
-            modifiedCode = modifiedCode.substring(ind2+1, modifiedCode.length()-1);
+            int ind2 = modifiedCode.indexOf("{");
+            int ind3 = modifiedCode.lastIndexOf("}");
+            modifiedCode = modifiedCode.substring(ind2+1, ind3);
 //            System.out.println(cntr);
         }
         catch(ParseProblemException pe){
@@ -82,13 +83,14 @@ public class Main {
         return modifiedCode;
     }
 
-    private static String writeCommentedCode(String code, String mode, String commentedCode) throws IOException {
+    private static String writeCommentedCode(String code, String commentedCode) throws IOException {
         //add commented code
 //        addCommentedCode cc = new addCommentedCode(mode);
         int[] indexes;
         int ind, ind2, ind3;
         ind2 = code.indexOf("{");
-        String newCode = code.substring(ind2+1, code.length()-1);
+        ind3 = code.lastIndexOf("}");
+        String newCode = code.substring(ind2+1, ind3);
         try {
             indexes = IntStream.range(0, newCode.length())
                     .filter(i -> newCode.charAt(i) == ';').toArray();
@@ -120,7 +122,6 @@ public class Main {
             String mode;
             String [] arr = String.valueOf(filePath).split("/", 0);
             mode = arr[arr.length-1].substring(0,arr[arr.length-1].indexOf("."));
-
             List<String> allLines = Files.readAllLines(filePath.toPath());
             Files.createDirectories(Paths.get(outputPath + "nameChanged" ));
             Files.createDirectories(Paths.get(outputPath + "commented"));
@@ -139,7 +140,9 @@ public class Main {
                     jsonObject.remove("code_tokens");
                     String modifiedCode = modifier(code);
                     jsonObject.put("code", modifiedCode);
-//                    jsonObject.put("original_string", modifiedCode);
+//                    System.out.println(code);
+//                    System.out.println(modifiedCode);
+//                    System.exit(0);
 
                     if(modifiedCode!=null){
                         try(FileWriter file = new FileWriter(outputPath + "nameChanged/" + mode + "_data.jsonl", true);
@@ -149,15 +152,17 @@ public class Main {
                         }
                     }
 
-//                    file.write(jsonObject.toJSONString());
-
                     int lineNo = (int)Math.floor(Math.random() * lineCount);
                     obj = new JSONParser().parse(allLines.get(lineNo));
-                    jsonObject = (JSONObject)obj;
-                    jCode = String.valueOf(jsonObject.get("code"));
-                    String commentedCode = writeCommentedCode(code, mode, jCode);
+                    JSONObject jsonObjectCc = (JSONObject)obj;
+                    jCode = String.valueOf(jsonObjectCc.get("code"));
+                    String commentedCode = writeCommentedCode(code, jCode);
+//                    System.out.println(code);
+//                    System.out.println(commentedCode);
+//                    System.exit(0);
+                    jsonObject.remove("code_tokens");
                     jsonObject.put("code", commentedCode);
-//                    jsonObject.put("original_string", commentedCode);
+
 
                     if(commentedCode!=null){
                         try(FileWriter file = new FileWriter(outputPath + "commented/" + mode + "_data.jsonl", true);
