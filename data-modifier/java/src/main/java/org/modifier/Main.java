@@ -91,18 +91,19 @@ public class Main {
         ind2 = code.indexOf("{");
         ind3 = code.lastIndexOf("}");
         String newCode = code.substring(ind2+1, ind3);
-        try {
-            indexes = IntStream.range(0, newCode.length())
-                    .filter(i -> newCode.charAt(i) == ';').toArray();
-            ind = indexes[(int)Math.floor(Math.random() * indexes.length)];
-        }
-        catch (IndexOutOfBoundsException e){
-            ind = newCode.indexOf(";");
-            System.out.println(e.getMessage());
-        }
+//        try {
+//            indexes = IntStream.range(0, newCode.length())
+//                    .filter(i -> newCode.charAt(i) == ';').toArray();
+//            ind = indexes[(int)Math.floor(Math.random() * indexes.length)];
+//        }
+//        catch (IndexOutOfBoundsException e){
+//            ind = newCode.indexOf(";");
+//            System.out.println(e.getMessage());
+//        }
+        ind = newCode.indexOf("{");
 
         String newModifiedCode = newCode.substring(0, ind+1)
-                + "/* " + commentedCode + " */"
+                + "\n/* " + commentedCode + " */\n"
                 + newCode.substring(ind + 1);
 
         return newModifiedCode;
