@@ -39,6 +39,7 @@ function add_comment(all_codes, outFile) {
         modifiedcode.slice(index + 1);
       d["code"] = modifiedcode;
       // console.log(modifiedcode)
+      delete d["code_tokens"]
       fs.appendFileSync(outFile, JSON.stringify(d));
       fs.appendFileSync(outFile, "\n");
     } catch (e) {

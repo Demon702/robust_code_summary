@@ -1,13 +1,12 @@
 import libcst as cst
 import json
-from libcst import RemovalSentinel, Comment, FlattenSentinel
+from libcst import RemovalSentinel, Comment
 import libcst.matchers as m
 from tqdm import tqdm
 import argparse
 import random
 import glob
 import os
-import re
 
 random.seed(0)
 parser = argparse.ArgumentParser()
@@ -64,9 +63,9 @@ class AddCodeAfterReturn(cst.CSTTransformer):
         return updated_node
     
 all_files = glob.glob(f'{INPUT_DIR}/*.jsonl')
-
+print(all_files)
 for file in all_files:
-    # skip_counter = 0
+    skip_counter = 0
     with open(file) as f:
         data = [json.loads(l) for l in f]
     filename = os.path.split(file)[1]
@@ -76,16 +75,17 @@ for file in all_files:
     for d in tqdm(data):
         code = d['code']
         if random.random() < CORRUPTION_RATE:
-            # print('original code: \n', code)
-            code_to_add = data[random.randint(0, file_len)]['code']
-            tree = cst.parse_module(f'''{code}''')
-            transformer = AddCodeAfterReturn(code_to_add)
-            new_tree = tree.visit(RemoveComments()).visit(transformer)
-            del d['code_tokens']
-            d['code'] = new_tree.code
-            # print('changed code: \n', new_tree.code)
-            # print('-' * 30)
+            try:
+                code_to_add = data[random.randint(0, file_len)]['code']
+                tree = cst.parse_module(f'''{code}''')
+                transformer = AddCodeAfterReturn(code_to_add)
+                new_tree = tree.visit(RemoveComments()).visit(transformer)
+                del d['code_tokens']
+                d['code'] = new_tree.code
+            except Exception as e:
+                skip_counter += 1
+
         json.dump(d, out)
         out.write('\n')
-    # print('skipped lines', skip_counter)
     out.close()
+    print(f'No of skipped files: {skip_counter}')

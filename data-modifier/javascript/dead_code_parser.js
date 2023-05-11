@@ -107,7 +107,7 @@ function get_ast(all_codes, outFile, ignored_code) {
         continue;
       }
       d["code"] = modified_code;
-      
+      delete d["code_tokens"];
       fs.appendFileSync(outFile, JSON.stringify(d));
       fs.appendFileSync(outFile, "\n");
     } catch (e) {

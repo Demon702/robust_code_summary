@@ -15,7 +15,8 @@ output = args.output
 out_dir = os.path.dirname(output)
 
 def process_corrupted_data(d):
-    del d['code_tokens']
+    if 'code_tokens' in d:
+        del d['code_tokens']
     return d
 
 if not os.path.exists(out_dir):
