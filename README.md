@@ -15,7 +15,7 @@
 - Install the required libraries by running the given command.
     - <code>pip install -r requirements.txt</code>
 - To run a particular script run the following the command.
-    - <code>python filename.py -i {input_data_json} -o {output_data_json}</code>
+    - <code>python filename.py -i {input_data_directory} -o {output_data_directory}</code>
 
 ## Javascript 
 ### Scripts 
@@ -29,3 +29,11 @@
     - <code>npm install</code>
 - To run a specific file run the following command.
     - <code>node file.js {input_data_json} {output_data_json}</code>
+
+## Java
+### Scripts
+- <strong>Main.java</strong> : Script to generate corrupted java code (renamed identifiers) and codes with commented code dataset. 
+- <strong>MethodNameModifier.class</strong> : Class for renaming the method name identifier. 
+- <strong>VariableNameModifier.class</strong> : Class for renaming the variable name identifier.
+
+## How to Run
