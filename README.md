@@ -35,5 +35,9 @@
 - <strong>Main.java</strong> : Script to generate corrupted java code (renamed identifiers) and codes with commented code dataset. 
 - <strong>MethodNameModifier.class</strong> : Class for renaming the method name identifier. 
 - <strong>VariableNameModifier.class</strong> : Class for renaming the variable name identifier.
+- <strong>java.jar</strong> : The jar file for running the Main.java code. 
 
 ## How to Run
+- Ensure java is preinstalled in your system.
+- To perform the data transformation for java codes, run the following command.
+    - <code>java -jar java.jar</code>
