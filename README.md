@@ -4,6 +4,10 @@
 - ```data-modifier/ ``` : The folder contains all the scripts for performing data-transformations. Within this directory, there are subdirectories named ```java```, ```javascript```, and ```python``` that contain scripts specifically designed to transform codes written in their respective languages.
 - ```human-annotations/``` : The folder contains the manual evaluation set of data (200 randomly sampled dataset from the original dataset). The files have been named on the basis of the coding language and the respective annotator. 
 
+## Instructions to download clean data
+- ```pip install gsutil```
+- ```gsutil -m cp -r "gs://sfr-codet5-data-research/data" .```
+
 ## Python 
 ### Scripts 
 - <strong>corrupt_variables-python.py</strong> : Script to rename variable and function identifiers
