@@ -41,3 +41,10 @@
 - Ensure java is preinstalled in your system.
 - To perform the data transformation for java codes, run the following command.
     - <code>java -jar src/main/java/org/modifier/java.jar</code>
+
+
+## Contributors
+- Abhilasha Lodha
+- Ankita Sahoo
+- Beena Kumari
+- Debanjan Mondal
